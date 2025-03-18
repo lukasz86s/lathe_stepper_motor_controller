@@ -1,0 +1,20 @@
+#build and compiling folders
+/Debug/
+/Release/
+
+#binary files
+*.hex
+*.bin
+*.elf
+*.map
+*.o
+*.d
+*.lst
+*.dep
+
+#temporary files
+*~
+*.tmp
+
+#other files
+lathe_stepper_motor_controller Debug (1).launch
