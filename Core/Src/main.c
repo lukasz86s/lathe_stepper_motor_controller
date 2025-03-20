@@ -56,6 +56,40 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+// measure rotationn speed of lathe
+#define REFCLOCK 100000L
+uint32_t diff = 0;
+uint32_t IC_val_1 = 0;
+uint32_t IC_val_2 = 0;
+int Is_first_caputred = 0;
+float frequency = 0;
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
+	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
+	{
+		if (Is_first_caputred == 0){
+			IC_val_1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+			Is_first_caputred = 1;
+		}
+		else
+		{
+			IC_val_2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+			if (IC_val_2 > IC_val_1)
+			{
+				diff = IC_val_2 - IC_val_1;
+			}
+			else if (IC_val_2 <  IC_val_1)
+			{
+				diff = (0xffff - IC_val_1) + IC_val_2;
+			}
+			frequency = REFCLOCK / diff;
+			__HAL_TIM_SET_COUNTER(htim, 0);
+			Is_first_caputred = 0;
+
+		}
+	}
+
+}
+
 
 /* USER CODE END 0 */
 
@@ -90,7 +124,8 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
+  //on IC interrupt
+  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,6 +133,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  HAL_Delay(500);
+	  frequency;
 
     /* USER CODE BEGIN 3 */
   }
