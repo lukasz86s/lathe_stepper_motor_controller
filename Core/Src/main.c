@@ -57,35 +57,27 @@ static void MX_TIM2_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 // measure rotationn speed of lathe
-#define REFCLOCK 100000L
-uint32_t diff = 0;
-uint32_t IC_val_1 = 0;
-uint32_t IC_val_2 = 0;
+#define REFCLOCK 100000UL
+uint32_t Prev_Value = 0;
+uint32_t IC_Value = 0;
+uint32_t Diffrence = 0;
 int Is_first_caputred = 0;
 float frequency = 0;
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
 	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
 	{
-		if (Is_first_caputred == 0){
-			IC_val_1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-			Is_first_caputred = 1;
-		}
-		else
+		IC_Value = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+		if (IC_Value > Prev_Value)
 		{
-			IC_val_2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-			if (IC_val_2 > IC_val_1)
-			{
-				diff = IC_val_2 - IC_val_1;
-			}
-			else if (IC_val_2 <  IC_val_1)
-			{
-				diff = (0xffff - IC_val_1) + IC_val_2;
-			}
-			frequency = REFCLOCK / diff;
-			__HAL_TIM_SET_COUNTER(htim, 0);
-			Is_first_caputred = 0;
-
+			Diffrence = IC_Value - Prev_Value;
 		}
+		else if (IC_Value < Prev_Value)
+		{
+			Diffrence = (0xFFFFFFFF - Prev_Value) + IC_Value;
+		}
+		frequency = REFCLOCK / (float)Diffrence;
+		Prev_Value = IC_Value;
+
 	}
 
 }
@@ -132,9 +124,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
 	  HAL_Delay(500);
-	  frequency;
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -223,7 +214,7 @@ static void MX_TIM2_Init(void)
   sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
   sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
-  sConfigIC.ICFilter = 0;
+  sConfigIC.ICFilter = 4;
   if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
